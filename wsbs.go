@@ -1,9 +1,16 @@
-package main
+package bombparty
 
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/gorilla/websocket"
 )
+
+var dialer = websocket.Dialer{
+	ReadBufferSize:  0,
+	WriteBufferSize: 0,
+}
 
 func (c *Client) wsMain(r *Room) {
 	conn, _, _ := dialer.Dial("wss://"+r.Server+".jklm.fun/socket.io/?EIO=4&transport=websocket", nil)
