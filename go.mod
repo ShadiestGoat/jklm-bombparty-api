@@ -1,4 +1,4 @@
-module shadygoat.eu/breakJKLM
+module github.com/ShadiestGoat/jklm-bombparty-api
 
 go 1.18
 
