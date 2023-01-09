@@ -125,6 +125,9 @@ func (c *Client) eventHandle(data []byte) {
 				Player: p,
 			})
 		}
+	case CHATTER_LEFT:
+		// TODO:
+		
 	case PLAYER_JOINED_ROUND:
 		rawData := rawAddPlayer{}
 		json.Unmarshal(data, &rawData)
