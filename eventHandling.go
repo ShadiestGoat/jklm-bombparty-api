@@ -29,7 +29,7 @@ func (c *Client) eventHandle(data []byte) {
 	iStart := 0
 	iEnd := 0
 	for i, char := range data {
-		if char == 34 {
+		if char == '"' {
 			if iStart == 0 {
 				iStart = i
 			} else {
@@ -56,16 +56,8 @@ func (c *Client) eventHandle(data []byte) {
 	data = data[iEnd+2 : len(data)-1]
 
 	switch Event(ev) {
-	case "chat":
-		i := len(data) - 2
-		for {
-			if data[i] == '"' {
-				break
-			}
-			i--
-		}
-		// msgContent := data[i+1:len(data)-1]
-
+	case CHAT:
+		fmt.Println("chat: ", string(data))
 	case JOINED_GAME:
 		resp := selfJoinResp{}
 		err := json.Unmarshal(data, &resp)

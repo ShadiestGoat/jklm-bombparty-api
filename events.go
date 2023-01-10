@@ -35,6 +35,7 @@ const (
 	WORD_FAIL                Event = "failWord"
 	BONUS_ALPHABET_COMPLETED Event = "bonusAlphabetCompleted"
 	KICKED                   Event = "kicked"
+	CHAT Event = "chat"
 )
 
 // The reason why a guess failed.
