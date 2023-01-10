@@ -125,10 +125,9 @@ func (c *Client) eventHandle(data []byte) {
 				Player: p,
 			})
 		}
-	case CHATTER_LEFT:
-		fmt.Println("CHATTER_LEFT: ", string(data))
-	case "updatePlayer":
-		fmt.Println("updatePlayer: ", string(data))
+	case CHATTER_LEFT, "updatePlayer", "setSelfRoles", "kicked", "setRoomPublic":
+		// TODO:
+		fmt.Println(string(ev), "->", string(data))
 	case PLAYER_JOINED_ROUND:
 		rawData := rawAddPlayer{}
 		json.Unmarshal(data, &rawData)
