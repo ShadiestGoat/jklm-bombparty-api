@@ -125,9 +125,18 @@ func (c *Client) eventHandle(data []byte) {
 				Player: p,
 			})
 		}
-	case CHATTER_LEFT, "updatePlayer", "setSelfRoles", "kicked", "setRoomPublic":
+	case CHATTER_LEFT, "updatePlayer", "setSelfRoles", "setRoomPublic":
 		// TODO:
 		fmt.Println(string(ev), "->", string(data))
+	case KICKED:
+		reason := ""
+		json.Unmarshal(data, &reason)
+
+		if h, ok := c.eventMap[KICKED]; ok {
+			h.(func(*EventSelfKicked))(&EventSelfKicked{
+				Reason: reason,
+			})
+		}
 	case PLAYER_JOINED_ROUND:
 		rawData := rawAddPlayer{}
 		json.Unmarshal(data, &rawData)

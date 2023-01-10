@@ -34,6 +34,7 @@ const (
 	WORD_CORRECT             Event = "correctWord"
 	WORD_FAIL                Event = "failWord"
 	BONUS_ALPHABET_COMPLETED Event = "bonusAlphabetCompleted"
+	KICKED                   Event = "kicked"
 )
 
 // The reason why a guess failed.
@@ -244,6 +245,10 @@ type EventPlayerJoinedRound struct {
 	*Player
 }
 
+type EventSelfKicked struct {
+	Reason string
+}
+
 type EventPlayerLeftRound struct {
 	*Player
 }
@@ -316,6 +321,8 @@ func (c *Client) AddEventHandler(handler interface{}) {
 		c.eventMap[TURN_CHANGE] = handler
 	case func(*EventPlayerInput):
 		c.eventMap[PLAYER_INPUT] = handler
+	case func(*EventSelfKicked):
+		c.eventMap[KICKED] = handler
 	}
 }
 
