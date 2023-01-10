@@ -13,5 +13,5 @@ func (r *Room) SendChat(msg string) {
 	wsBs = append(wsBs, b...)
 	wsBs = append(wsBs, ']')
 
-	r.WS.WriteMessage(1, wsBs)
+	r.WSAuth.WriteMessage(1, wsBs)
 }
