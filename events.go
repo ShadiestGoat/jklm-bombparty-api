@@ -300,6 +300,11 @@ type EventBonusAlphabetComplete struct {
 	Player *RoundPlayer
 }
 
+type EventChat struct {
+	Author *Player
+	Message string
+}
+
 func (c *Client) AddEventHandler(handler interface{}) {
 	switch handler.(type) {
 	case func(*EventJoinedGame):

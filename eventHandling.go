@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+func tryUnmarshal(b []byte, v any) {
+	if err := json.Unmarshal(b, v); err != nil {
+		panic("Couldn't unmarshal -> " + string(b) + " <- Error: " + err.Error())
+	}
+}
+
 // Convert to Player & return a peer ID
 func (r rawProfile) Player() (Player, int) {
 	isLeader, isMod := false, false
@@ -26,38 +32,37 @@ func (r rawProfile) Player() (Player, int) {
 }
 
 func (c *Client) eventHandle(data []byte) {
-	iStart := 0
-	iEnd := 0
-	for i, char := range data {
-		if char == '"' {
-			if iStart == 0 {
-				iStart = i
-			} else {
-				iEnd = i
-				break
-			}
-		}
+	out := []json.RawMessage{}
+
+	if err := json.Unmarshal(data, &out); err != nil {
+		panic("Unknown data type: " + string(data) + ": " + err.Error())
 	}
 
-	ev := data[iStart+1 : iEnd]
-
-	switch string(ev) {
+	
+	ev := ""
+	if err := json.Unmarshal(out[0], &ev); err != nil {
+		panic("Unknown data type: " + string(data) + ": " + err.Error())
+	}
+	
+	switch ev {
 	case "clearUsedWords":
 		return
 	}
 
-	if len(data)-1 <= iEnd+2 {
-		fmt.Println(string(ev))
-		fmt.Println(string(data[iEnd+2:]))
-		fmt.Println(string(data[:len(data)-1]))
-		panic(string(data))
-	}
-
-	data = data[iEnd+2 : len(data)-1]
-
 	switch Event(ev) {
 	case CHAT:
-		fmt.Println("chat: ", string(data))
+		// 42["chat",{"peerId":32,"auth":null,"roles":[],"nickname":"Guest7101"},"Guest8386 has returned"]
+		authorRaw := rawProfile{}
+		tryUnmarshal(out[1], &authorRaw)
+		msg := ""
+		tryUnmarshal(out[2], &msg)
+
+		author := c.Room.Chatters[fmt.Sprint(authorRaw.ID)]
+		sendEv(c, CHAT, &EventChat{
+			Author:  author,
+			Message: msg,
+		})
+	// TODO:
 	case JOINED_GAME:
 		resp := selfJoinResp{}
 		err := json.Unmarshal(data, &resp)
@@ -352,5 +357,11 @@ func (c *Client) eventHandle(data []byte) {
 		}
 	default:
 		panic(string(ev) + " is unknown!")
+	}
+}
+
+func sendEv[T any](c *Client, ev Event, v T) {
+	if h, ok := c.eventMap[ev]; ok {
+		h.(func(T))(v)
 	}
 }
