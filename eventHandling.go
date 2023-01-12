@@ -51,6 +51,8 @@ func (c *Client) eventHandle(data []byte) {
 		return
 	}
 
+	fmt.Println(string(data))
+
 	switch Event(ev) {
 	case CHAT:
 		// 42["chat",{"peerId":32,"auth":null,"roles":[],"nickname":"Guest7101"},"Guest8386 has returned"]
@@ -125,10 +127,17 @@ func (c *Client) eventHandle(data []byte) {
 		sendEv(c, CHATTER_JOINED, &EventChatterJoined{
 			Player: p,
 		})
-	case CHATTER_LEFT, KICKED, "updatePlayer", "setSelfRoles", "setRoomPublic":
+	case CHATTER_LEFT, KICKED, "setSelfRoles", "setRoomPublic":
 		// TODO:
 		// 42["chatterRemoved",{"nickname":"pekopeko"}]
 		fmt.Println(string(ev), "->", string(data))
+		
+	case "updatePlayer":
+		// 42["updatePlayer",5929,{"peerId":5929,"nickname":"dormiesâ­ ","picture":"picture here","language":"en-US","auth":null,"roles":[]},false]
+		// 42["updatePlayer",6007,{"peerId":6007,"nickname":"dinamitss","language":"es-ES","auth":null,"roles":[]},false]
+		// 42["updatePlayer",6016,{"peerId":6016,"nickname":"knee grow","picture":"picture here","language":"en-US","auth":null,"roles":[]},false]
+		// 42["updatePlayer",5954,{"peerId":5954,"nickname":"SIND","picture":"picture here","language":"en-US","auth":null,"roles":[]},false]
+		// idk what this does but ig we should update player or smt (should we even send out an event for this?)
 	case PLAYER_JOINED_ROUND:
 		// 42["addPlayer",{"profile":{"peerId":26,"nickname":"blast","language":"en-US","auth":null,"roles":[]},"isOnline":true}]
 		rawData := rawAddPlayer{}
@@ -158,6 +167,7 @@ func (c *Client) eventHandle(data []byte) {
 		sendEv(c, COUNTDOWN, &EventCountdown{
 			ScheduledStart: time.UnixMilli(rawT),
 		})
+	
 	// TODO:
 	case "setMilestone":
 		// Round start: 42["setMilestone",{"name":"round","startTime":1656771881309,"currentPlayerPeerId":1,"dictionaryManifest":{"name":"English","bonusAlphabet":"abcdefghijklmnopqrstuvwy","promptDifficulties":{"beginner":500,"medium":300,"hard":100}},"syllable":"cli","promptAge":0,"usedWordCount":0,"playerStatesByPeerId":{"0":{"lives":2,"word":"","wasWordValidated":false,"bonusLetters":[]},"1":{"lives":2,"word":"","wasWordValidated":false,"bonusLetters":[]}}},1656771881329]
@@ -261,6 +271,7 @@ func (c *Client) eventHandle(data []byte) {
 			RoundPlayer: player,
 		})
 	case WORD_CORRECT:
+		// 42["correctWord",{"playerPeerId":54,"bonusLetters":["m","a","n","t","l","e","o","g","b","r","w","u","d","i","s","c","h","k","y","p","q","f","v"]}]
 		raw := rawWordCorrect{}
 		json.Unmarshal(data, &raw)
 		id := fmt.Sprint(raw.PlayerPeerID)
@@ -271,38 +282,19 @@ func (c *Client) eventHandle(data []byte) {
 			p.BonusLetters[ru] = true
 		}
 
-		if h, ok := c.eventMap[WORD_CORRECT]; ok {
-			h.(func(*EventWordCorrect))(&EventWordCorrect{
-				p,
-			})
-		}
-	case "failWord":
-		if h, ok := c.eventMap[WORD_FAIL]; ok {
-			idRaw := []byte{}
-			var r byte
-			for n, b := range data {
-				if b == 44 {
-					r = data[n+2]
-					break
-				} else {
-					idRaw = append(idRaw, b)
-				}
-			}
-
-			e := &EventWordFail{
-				Player: c.Room.Round.Players[string(idRaw)],
-			}
-
-			switch r {
-			case 110:
-				e.Reason = FR_NOT_IN_DICTIONARY
-			case 109:
-				e.Reason = FR_NO_PROMPT
-			case 97:
-				e.Reason = FR_ALREADY_USED
-			}
-			h.(func(*EventWordFail))(e)
-		}
+		sendEv(c, WORD_CORRECT, &EventWordCorrect{
+			p,
+		})
+	case WORD_FAIL:
+		// 42["failWord",54,"alreadyUsed"]
+		id := bToID(out[1])
+		reason := FR_NO_PROMPT
+		tryUnmarshal(out[2], &reason)
+		
+		sendEv(c, WORD_FAIL, &EventWordFail{
+			Player: c.Room.Round.Players[id],
+			Reason: reason,
+		})
 	case BONUS_ALPHABET_COMPLETED:
 		idRaw := []byte{}
 		health := []byte{}
